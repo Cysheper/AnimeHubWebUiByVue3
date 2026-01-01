@@ -1,0 +1,290 @@
+:root {
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* ========================================
+     🎨 统一透明度配置中心
+     所有透明度都在这里修改！
+     ======================================== */
+  
+  /* 主要区域透明度 */
+  --opacity-main: 0.8;           /* 主卡片/按钮背景 */
+  --opacity-border: 0.7;         /* 边框透明度 */
+  --opacity-hover: 0.7;          /* 悬停时透明度（仅文章用） */
+  --opacity-button: 0.7;        /* 按钮透明度（更不透明，颜色更深） */
+  
+  /* 次要区域透明度 */
+  --opacity-secondary: 0.8;     /* 次要卡片背景 */
+  --opacity-stat: 0.8;          /* 统计项背景 */
+  --opacity-subtle: 0.8;        /* 装饰性元素 */
+  
+  /* 特殊区域透明度 */
+  --opacity-fortune: 0.9;       /* 运势卡片 */
+  --opacity-header: 0.6;         /* 页面标题 */
+  --opacity-icon-bg: 0.8;        /* 图标背景 */
+}
+
+/* 亮色主题（白色透明玻璃 + 黑字） */
+:root,
+[data-theme="light"] {
+  --primary-color: #ffffff;
+  --secondary-color: #f5f5f5;
+  --accent-color: #e0e0e0;
+  --text-primary: #000000;
+  --text-secondary: rgba(0, 0, 0, 0.85);
+  --text-muted: rgba(0, 0, 0, 0.65);
+  
+  /* 使用统一的透明度变量 */
+  --glass-bg: rgba(255, 255, 255, var(--opacity-main));
+  --glass-border: rgba(255, 255, 255, var(--opacity-border));
+  --glass-hover: rgba(255, 255, 255, var(--opacity-hover));
+  --glass-button: rgba(255, 255, 255, var(--opacity-button));
+  --glass-secondary: rgba(255, 255, 255, var(--opacity-secondary));
+  --glass-stat: rgba(255, 255, 255, var(--opacity-stat));
+  --glass-subtle: rgba(255, 255, 255, var(--opacity-subtle));
+  --glass-fortune: rgba(255, 255, 255, var(--opacity-fortune));
+  --glass-header: rgba(255, 255, 255, var(--opacity-header));
+  --glass-icon-bg: rgba(255, 255, 255, var(--opacity-icon-bg));
+  
+  --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
+}
+
+/* 暗色主题（黑色透明玻璃 + 白字） */
+[data-theme="dark"] {
+  --primary-color: #000000;
+  --secondary-color: #1a1a1a;
+  --accent-color: #2a2a2a;
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.85);
+  --text-muted: rgba(255, 255, 255, 0.65);
+  
+  /* 使用统一的透明度变量 */
+  --glass-bg: rgba(0, 0, 0, var(--opacity-main));
+  --glass-border: rgba(0, 0, 0, var(--opacity-border));
+  --glass-hover: rgba(0, 0, 0, var(--opacity-hover));
+  --glass-button: rgba(0, 0, 0, var(--opacity-button));
+  --glass-secondary: rgba(0, 0, 0, var(--opacity-secondary));
+  --glass-stat: rgba(0, 0, 0, var(--opacity-stat));
+  --glass-subtle: rgba(0, 0, 0, var(--opacity-subtle));
+  --glass-fortune: rgba(0, 0, 0, var(--opacity-fortune));
+  --glass-header: rgba(0, 0, 0, var(--opacity-header));
+  --glass-icon-bg: rgba(0, 0, 0, var(--opacity-icon-bg));
+  
+  --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: #2a2a2a;
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* 透明材质基础样式（已移除模糊效果和悬停动效） */
+.glass {
+  background: var(--glass-bg);
+  /* backdrop-filter: blur(10px); 已关闭，太卡 */
+  /* -webkit-backdrop-filter: blur(10px); 已关闭，太卡 */
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+}
+
+.glass:hover {
+  background: var(--glass-hover);
+  /* transform: translateY(-2px); 已去掉悬停动效 */
+  /* box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.45); 已去掉悬停动效 */
+}
+
+/* 渐变文本 */
+.gradient-text {
+  color: var(--text-primary);
+  text-shadow: 0 2px 10px rgba(128, 128, 128, 0.3);
+}
+
+/* 动画 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(128, 128, 128, 0.3), 0 0 20px rgba(128, 128, 128, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(128, 128, 128, 0.4), 0 0 30px rgba(128, 128, 128, 0.3);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.slide-in-right {
+  animation: slideInRight 0.5s ease-out;
+}
+
+.slide-in-left {
+  animation: slideInLeft 0.5s ease-out;
+}
+
+/* 背景动画 */
+.animated-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  background-image: url('/background.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-color: #2a2a2a;
+}
+
+/* 背景粒子效果 */
+.particles {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.particle {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  animation: float 6s ease-in-out infinite;
+}
+
+.particle:nth-child(1) {
+  width: 80px;
+  height: 80px;
+  top: 10%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.particle:nth-child(2) {
+  width: 60px;
+  height: 60px;
+  top: 60%;
+  left: 80%;
+  animation-delay: 1s;
+}
+
+.particle:nth-child(3) {
+  width: 40px;
+  height: 40px;
+  top: 80%;
+  left: 20%;
+  animation-delay: 2s;
+}
+
+.particle:nth-child(4) {
+  width: 50px;
+  height: 50px;
+  top: 30%;
+  left: 70%;
+  animation-delay: 1.5s;
+}
+
+.particle:nth-child(5) {
+  width: 70px;
+  height: 70px;
+  top: 50%;
+  left: 40%;
+  animation-delay: 0.5s;
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--glass-bg);
+  border-radius: 4px;
+  border: 1px solid var(--glass-border);
+  transition: var(--transition);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--glass-hover);
+}
+
+/* 响应式 */
+@media (max-width: 1024px) {
+  body {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    font-size: 13px;
+  }
+}

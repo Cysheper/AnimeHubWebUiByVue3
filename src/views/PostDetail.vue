@@ -1,0 +1,573 @@
+<template>
+  <div class="post-detail-page">
+    <div class="layout-grid">
+      <section class="content">
+        <GlassButton variant="outline" @click="goBack" class="back-btn">
+          <i class="fas fa-arrow-left"></i> 返回
+        </GlassButton>
+
+        <div v-if="loading" class="loading">
+          <div class="loader"></div>
+        </div>
+
+        <GlassCard v-else-if="post" class="post-detail">
+          <div class="post-header">
+            <div class="author-info">
+              <img 
+                :src="post.author.avatar" 
+                :alt="post.author.username" 
+                class="author-avatar clickable" 
+                @click="goToUserProfile(post.author.id)"
+              />
+              <div class="author-details">
+                <span class="author-name clickable" @click="goToUserProfile(post.author.id)">{{ post.author.username }}</span>
+                <span class="post-time">{{ formatTime(post.createdAt) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="post-content">
+            <h1 class="post-title">{{ post.title }}</h1>
+            <div class="post-text">{{ post.content }}</div>
+            <div v-if="post.images && post.images.length > 0" class="post-images">
+              <img
+                v-for="(image, index) in post.images"
+                :key="index"
+                :src="image"
+                :alt="`图片 ${index + 1}`"
+                class="post-image"
+              />
+            </div>
+          </div>
+
+          <div class="post-actions">
+            <button class="action-btn" :class="{ liked: post.isLiked }" @click="handleLike">
+              <span class="action-icon"><i :class="post.isLiked ? 'fas fa-heart' : 'far fa-heart'"></i></span>
+              <span class="action-text">{{ post.isLiked ? '已点赞' : '点赞' }}</span>
+              <span class="action-count">{{ post.likes }}</span>
+            </button>
+            <button class="action-btn">
+              <span class="action-icon"><i class="far fa-eye"></i></span>
+              <span class="action-text">浏览</span>
+              <span class="action-count">{{ post.viewCount }}</span>
+            </button>
+          </div>
+
+          <div class="comments-section">
+            <h3 class="comments-title">
+              评论 <span class="comment-count">({{ post.commentCount }})</span>
+            </h3>
+
+            <div v-if="isLoggedIn" class="comment-form">
+              <GlassInput
+                v-model="newComment"
+                type="textarea"
+                placeholder="写下你的评论..."
+                :rows="3"
+              />
+              <GlassButton
+                variant="primary"
+                :loading="commenting"
+                @click="handleComment"
+                class="comment-btn"
+              >
+                发表评论
+              </GlassButton>
+            </div>
+            <div v-else class="login-prompt">
+              <p>请先<a href="/login" class="login-link">登录</a>后再评论</p>
+            </div>
+
+            <div class="comments-list">
+              <div v-for="comment in post.comments" :key="comment.id" class="comment-item">
+                <img
+                  :src="comment.author.avatar"
+                  :alt="comment.author.username"
+                  class="comment-avatar clickable"
+                  @click="goToUserProfile(comment.author.id)"
+                />
+                <div class="comment-content">
+                  <div class="comment-header">
+                    <span class="comment-author clickable" @click="goToUserProfile(comment.author.id)">{{ comment.author.username }}</span>
+                    <span class="comment-time">{{ formatTime(comment.createdAt) }}</span>
+                  </div>
+                  <p class="comment-text">{{ comment.content }}</p>
+                  <div class="comment-actions">
+                    <button
+                      class="comment-like-btn"
+                      :class="{ liked: comment.isLiked }"
+                      @click="handleLikeComment(comment.id)"
+                    >
+                      <span><i :class="comment.isLiked ? 'fas fa-heart' : 'far fa-heart'"></i></span>
+                      <span>{{ comment.likes }}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </GlassCard>
+      </section>
+
+      <aside class="sidebar">
+        <AuthorCard v-if="post && authorInfo" :author="authorInfo" @follow="handleAuthorFollow" />
+      </aside>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { usePostStore } from '@/stores/post'
+import { useUserStore } from '@/stores/user'
+import GlassCard from '@/components/GlassCard.vue'
+import GlassButton from '@/components/GlassButton.vue'
+import GlassInput from '@/components/GlassInput.vue'
+import SiteInfo from '@/components/SiteInfo.vue'
+import AuthorCard from '@/components/AuthorCard.vue'
+
+const route = useRoute()
+const router = useRouter()
+const postStore = usePostStore()
+const userStore = useUserStore()
+
+const loading = ref(false)
+const commenting = ref(false)
+const newComment = ref('')
+const post = computed(() => postStore.currentPost)
+const isLoggedIn = computed(() => userStore.isLoggedIn)
+
+// 作者信息（从帖子中获取）
+const authorInfo = computed(() => {
+  if (!post.value) return null
+  return {
+    id: post.value.author.id,
+    username: post.value.author.username,
+    avatar: post.value.author.avatar,
+    signature: post.value.author.signature || '',
+    postsCount: post.value.author.postsCount || 0,
+    likesCount: post.value.author.likesCount || 0,
+    followersCount: post.value.author.followersCount || 0,
+    createdAt: post.value.author.createdAt
+  }
+})
+
+const goBack = () => {
+  router.back()
+}
+
+// 跳转到用户主页
+const goToUserProfile = (userId: number) => {
+  router.push(`/user/${userId}`)
+}
+
+// 关注作者（从 store 处理）
+const handleAuthorFollow = (isFollowing: boolean) => {
+  console.log('关注状态变更:', isFollowing)
+}
+
+const handleLike = async () => {
+  if (!post.value) return
+  await postStore.likePost(post.value.id)
+}
+
+const handleComment = async () => {
+  if (!post.value || !newComment.value.trim()) return
+
+  commenting.value = true
+  try {
+    await postStore.createComment(post.value.id, newComment.value)
+    newComment.value = ''
+  } catch (error) {
+    alert('评论失败，请稍后重试')
+  } finally {
+    commenting.value = false
+  }
+}
+
+const handleLikeComment = async (commentId: number) => {
+  await postStore.likeComment(commentId)
+}
+
+const formatTime = (time: string) => {
+  const date = new Date(time)
+  const now = new Date()
+  const diff = now.getTime() - date.getTime()
+  const minutes = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days = Math.floor(diff / 86400000)
+
+  if (minutes < 1) return '刚刚'
+  if (minutes < 60) return `${minutes}分钟前`
+  if (hours < 24) return `${hours}小时前`
+  if (days < 7) return `${days}天前`
+  return date.toLocaleDateString('zh-CN')
+}
+
+onMounted(async () => {
+  const postId = Number(route.params.id)
+  if (!postId) {
+    router.push('/')
+    return
+  }
+
+  loading.value = true
+  try {
+    await postStore.fetchPostById(postId)
+  } catch (error) {
+    alert('帖子不存在')
+    router.push('/')
+  } finally {
+    loading.value = false
+  }
+})
+</script>
+
+<style scoped>
+.post-detail-page {
+  max-width: 1400px;
+  margin: 0 auto;
+  animation: fadeIn 0.6s ease-out;
+}
+
+.layout-grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 20px;
+  align-items: start;
+}
+
+.content {
+  min-height: 400px;
+}
+
+.sidebar {
+  position: sticky;
+  top: 100px;
+  animation: slideInRight 0.6s ease-out;
+}
+
+.back-btn {
+  margin-bottom: 20px;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 60px 20px;
+}
+
+.loader {
+  width: 50px;
+  height: 50px;
+  border: 4px solid var(--glass-border);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.post-detail {
+  padding: 32px;
+}
+
+.post-header {
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.author-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.author-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--glass-border);
+}
+
+.author-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.author-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.author-name.clickable,
+.comment-author.clickable {
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.author-name.clickable:hover,
+.comment-author.clickable:hover {
+  color: var(--primary-color);
+}
+
+.author-avatar.clickable,
+.comment-avatar.clickable {
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+
+.author-avatar.clickable:hover,
+.comment-avatar.clickable:hover {
+  transform: scale(1.1);
+}
+
+.post-time {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.post-content {
+  margin-bottom: 24px;
+}
+
+.post-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  line-height: 1.4;
+}
+
+.post-text {
+  font-size: 16px;
+  color: var(--text-secondary);
+  line-height: 1.8;
+  margin-bottom: 20px;
+  white-space: pre-wrap;
+}
+
+.post-images {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.post-image {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+/* .post-image:hover: 不改变缩放，是文章内容 */
+
+.post-actions {
+  display: flex;
+  gap: 16px;
+  padding: 20px 0;
+  border-top: 1px solid var(--glass-border);
+  border-bottom: 1px solid var(--glass-border);
+  margin-bottom: 32px;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: none;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  color: var(--text-secondary);
+  font-size: 16px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.action-btn:hover {
+  /* background: rgba(255, 255, 255, 0.1); 按钮不改变颜色/透明度 */
+  transform: translateY(-2px);
+}
+
+.action-btn.liked {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.action-icon {
+  font-size: 24px;
+}
+
+.action-text {
+  font-weight: 600;
+}
+
+.action-count {
+  font-weight: 700;
+}
+
+.comments-section {
+  padding-top: 32px;
+}
+
+.comments-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 24px;
+}
+
+.comment-count {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.comment-form {
+  margin-bottom: 32px;
+}
+
+.comment-btn {
+  margin-top: 12px;
+}
+
+.login-prompt {
+  text-align: center;
+  padding: 32px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  margin-bottom: 32px;
+}
+
+.login-prompt p {
+  color: var(--text-secondary);
+  font-size: 16px;
+}
+
+.login-link {
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.login-link:hover {
+  text-decoration: underline;
+}
+
+.comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.comment-item {
+  display: flex;
+  gap: 16px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  transition: var(--transition);
+}
+
+/* .comment-item:hover: 不改变颜色/透明度 */
+
+.comment-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--glass-border);
+  flex-shrink: 0;
+}
+
+.comment-content {
+  flex: 1;
+}
+
+.comment-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.comment-author {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.comment-time {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.comment-text {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 12px;
+  white-space: pre-wrap;
+}
+
+.comment-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.comment-like-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: none;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+/* .comment-like-btn:hover: 按钮不改变颜色/透明度 */
+
+.comment-like-btn.liked {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+@media (max-width: 1024px) {
+  .layout-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+  }
+}
+
+@media (max-width: 768px) {
+  .post-detail {
+    padding: 20px;
+  }
+
+  .post-title {
+    font-size: 24px;
+  }
+
+  .post-text {
+    font-size: 15px;
+  }
+}
+</style>
