@@ -28,7 +28,7 @@
 
           <div class="post-content">
             <h1 class="post-title">{{ post.title }}</h1>
-            <div class="post-text">{{ post.content }}</div>
+            <div class="post-text" v-html="renderedContent"></div>
             <div v-if="post.images && post.images.length > 0" class="post-images">
               <img
                 v-for="(image, index) in post.images"
@@ -50,6 +50,14 @@
               <span class="action-icon"><i class="far fa-eye"></i></span>
               <span class="action-text">浏览</span>
               <span class="action-count">{{ post.viewCount }}</span>
+            </button>
+            <button 
+              v-if="isOwnPost" 
+              class="action-btn edit-btn" 
+              @click="handleEdit"
+            >
+              <span class="action-icon"><i class="fas fa-edit"></i></span>
+              <span class="action-text">编辑</span>
             </button>
           </div>
 
@@ -121,6 +129,10 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePostStore } from '@/stores/post'
 import { useUserStore } from '@/stores/user'
+import { Marked } from 'marked'
+import { markedHighlight } from 'marked-highlight'
+import katex from 'katex'
+import hljs from 'highlight.js'
 import GlassCard from '@/components/GlassCard.vue'
 import GlassButton from '@/components/GlassButton.vue'
 import GlassInput from '@/components/GlassInput.vue'
@@ -137,6 +149,56 @@ const newComment = ref('')
 const post = computed(() => postStore.currentPost)
 const isLoggedIn = computed(() => userStore.isLoggedIn)
 
+// 配置 marked（Markdown 渲染）
+const md = new Marked(
+  markedHighlight({
+    langPrefix: 'hljs language-',
+    highlight(code, lang) {
+      const language = lang && hljs.getLanguage(lang) ? lang : 'plaintext'
+      return hljs.highlight(code, { language }).value
+    }
+  })
+)
+
+md.setOptions({
+  breaks: true,
+  gfm: true
+})
+
+// 渲染 Markdown 和 LaTeX
+const renderedContent = computed(() => {
+  if (!post.value?.content) return ''
+  
+  let content = post.value.content
+  
+  // 处理块级 LaTeX 公式 $$...$$
+  content = content.replace(/\$\$([\s\S]+?)\$\$/g, (_match, formula) => {
+    try {
+      return '<div class="latex-block">' + katex.renderToString(formula.trim(), {
+        displayMode: true,
+        throwOnError: false
+      }) + '</div>'
+    } catch (e) {
+      return '<div class="latex-error">LaTeX 渲染错误</div>'
+    }
+  })
+  
+  // 处理行内 LaTeX 公式 $...$
+  content = content.replace(/\$([^\$\n]+?)\$/g, (_match, formula) => {
+    try {
+      return '<span class="latex-inline">' + katex.renderToString(formula, {
+        displayMode: false,
+        throwOnError: false
+      }) + '</span>'
+    } catch (e) {
+      return '<span class="latex-error">LaTeX 错误</span>'
+    }
+  })
+  
+  // 渲染 Markdown
+  return md.parse(content) as string
+})
+
 // 作者信息（从帖子中获取）
 const authorInfo = computed(() => {
   if (!post.value) return null
@@ -152,6 +214,12 @@ const authorInfo = computed(() => {
   }
 })
 
+// 判断是否是自己的帖子
+const isOwnPost = computed(() => {
+  if (!post.value || !userStore.user) return false
+  return post.value.author.id === userStore.user.id
+})
+
 const goBack = () => {
   router.back()
 }
@@ -159,6 +227,13 @@ const goBack = () => {
 // 跳转到用户主页
 const goToUserProfile = (userId: number) => {
   router.push(`/user/${userId}`)
+}
+
+// 编辑帖子
+const handleEdit = () => {
+  if (post.value) {
+    router.push(`/edit-post/${post.value.id}`)
+  }
 }
 
 // 关注作者（从 store 处理）
@@ -352,7 +427,122 @@ onMounted(async () => {
   color: var(--text-secondary);
   line-height: 1.8;
   margin-bottom: 20px;
-  white-space: pre-wrap;
+}
+
+/* Markdown 渲染样式 */
+.post-text :deep(h1) {
+  font-size: 28px;
+  font-weight: 800;
+  margin: 28px 0 14px;
+  color: var(--text-primary);
+}
+
+.post-text :deep(h2) {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 24px 0 12px;
+  color: var(--text-primary);
+}
+
+.post-text :deep(h3) {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 20px 0 10px;
+  color: var(--text-primary);
+}
+
+.post-text :deep(p) {
+  margin: 16px 0;
+  color: var(--text-primary);
+}
+
+.post-text :deep(code) {
+  padding: 2px 8px;
+  background: var(--glass-stat);
+  border-radius: 4px;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 0.9em;
+  color: var(--text-primary);
+}
+
+.post-text :deep(pre) {
+  margin: 16px 0;
+  padding: 16px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+.post-text :deep(pre code) {
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+}
+
+.post-text :deep(blockquote) {
+  margin: 16px 0;
+  padding-left: 16px;
+  border-left: 4px solid var(--glass-border);
+  color: var(--text-secondary);
+}
+
+.post-text :deep(ul), .post-text :deep(ol) {
+  margin: 16px 0;
+  padding-left: 24px;
+}
+
+.post-text :deep(li) {
+  margin: 8px 0;
+}
+
+.post-text :deep(img) {
+  max-width: 100%;
+  border-radius: 12px;
+  margin: 16px 0;
+}
+
+.post-text :deep(a) {
+  color: var(--primary-color);
+  text-decoration: underline;
+}
+
+.post-text :deep(.latex-block) {
+  margin: 24px 0;
+  padding: 16px;
+  background: var(--glass-subtle);
+  border-radius: 12px;
+  overflow-x: auto;
+  text-align: center;
+}
+
+.post-text :deep(.latex-inline) {
+  display: inline-block;
+  margin: 0 4px;
+}
+
+.post-text :deep(.latex-error) {
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.1);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.post-text :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+}
+
+.post-text :deep(th), .post-text :deep(td) {
+  padding: 10px 12px;
+  border: 1px solid var(--glass-border);
+  text-align: left;
+}
+
+.post-text :deep(th) {
+  background: var(--glass-subtle);
+  font-weight: 600;
 }
 
 .post-images {
@@ -403,6 +593,10 @@ onMounted(async () => {
 .action-btn.liked {
   color: var(--text-primary);
   background: rgba(255, 255, 255, 0.2);
+}
+
+.action-btn.edit-btn:hover {
+  color: black;
 }
 
 .action-icon {

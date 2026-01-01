@@ -12,8 +12,8 @@
     <div class="login-container">
       <GlassCard class="login-card">
         <div class="logo">
-          <h1 class="gradient-text">动漫Hub</h1>
-          <p class="subtitle">欢迎来到动漫爱好者的天堂</p>
+          <h1 class="gradient-text">AnimeHub</h1>
+          <p class="subtitle">欢迎来到动漫爱好者集聚地</p>
         </div>
 
 

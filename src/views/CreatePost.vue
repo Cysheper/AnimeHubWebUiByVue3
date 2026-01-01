@@ -4,65 +4,74 @@
       <div class="editor-section">
         <GlassCard>
           <div class="page-header">
-            <h1 class="page-title"><i class="fas fa-pen"></i> 发布新帖子</h1>
+            <h1 class="page-title">
+              <i :class="isEditMode ? 'fas fa-edit' : 'fas fa-pen'"></i> 
+              {{ isEditMode ? '编辑帖子' : '发布新帖子' }}
+            </h1>
             <p class="page-description">支持 Markdown 和 LaTeX 公式</p>
           </div>
 
-          <div class="form-group">
-            <label class="form-label">标题</label>
-            <GlassInput
-              v-model="post.title"
-              placeholder="给你的帖子起个标题吧..."
-            />
+          <div v-if="loadingPost" class="loading">
+            <div class="loader"></div>
+            <p>加载帖子内容中...</p>
           </div>
 
-          <div class="form-group">
-            <label class="form-label">分类</label>
-            <select v-model="post.category" class="category-select">
-              <option value="">选择分类</option>
-              <option value="discussion">讨论</option>
-              <option value="question">提问</option>
-              <option value="share">分享</option>
-              <option value="tutorial">教程</option>
-              <option value="news">资讯</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <div class="editor-header">
-              <label class="form-label">内容</label>
-              <div class="editor-tools">
-                <button @click="insertMarkdown('**粗体**')" class="tool-btn" title="粗体">
-                  <i class="fas fa-bold"></i>
-                </button>
-                <button @click="insertMarkdown('*斜体*')" class="tool-btn" title="斜体">
-                  <i class="fas fa-italic"></i>
-                </button>
-                <button @click="insertMarkdown('# ')" class="tool-btn" title="标题">
-                  <i class="fas fa-heading"></i>
-                </button>
-                <button @click="insertMarkdown('`代码`')" class="tool-btn" title="行内代码">
-                  <i class="fas fa-code"></i>
-                </button>
-                <button @click="insertMarkdown('\n```\n代码块\n```\n')" class="tool-btn" title="代码块">
-                  <i class="fas fa-file-code"></i>
-                </button>
-                <button @click="insertMarkdown('$$公式$$')" class="tool-btn" title="LaTeX 公式">
-                  <i class="fas fa-square-root-alt"></i>
-                </button>
-                <button @click="insertMarkdown('[链接](url)')" class="tool-btn" title="链接">
-                  <i class="fas fa-link"></i>
-                </button>
-                <button @click="insertMarkdown('![图片](url)')" class="tool-btn" title="图片">
-                  <i class="fas fa-image"></i>
-                </button>
-              </div>
+          <template v-else>
+            <div class="form-group">
+              <label class="form-label">标题</label>
+              <GlassInput
+                v-model="post.title"
+                placeholder="给你的帖子起个标题吧..."
+              />
             </div>
-            <textarea
-              ref="contentInput"
-              v-model="post.content"
-              class="content-editor"
-              placeholder="支持 Markdown 语法和 LaTeX 公式...
+
+            <div class="form-group">
+              <label class="form-label">分类</label>
+              <select v-model="post.category" class="category-select">
+                <option value="">选择分类</option>
+                <option value="discussion">讨论</option>
+                <option value="question">提问</option>
+                <option value="share">分享</option>
+                <option value="tutorial">教程</option>
+                <option value="news">资讯</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <div class="editor-header">
+                <label class="form-label">内容</label>
+                <div class="editor-tools">
+                  <button @click="insertMarkdown('**粗体**')" class="tool-btn" title="粗体">
+                    <i class="fas fa-bold"></i>
+                  </button>
+                  <button @click="insertMarkdown('*斜体*')" class="tool-btn" title="斜体">
+                    <i class="fas fa-italic"></i>
+                  </button>
+                  <button @click="insertMarkdown('# ')" class="tool-btn" title="标题">
+                    <i class="fas fa-heading"></i>
+                  </button>
+                  <button @click="insertMarkdown('`代码`')" class="tool-btn" title="行内代码">
+                    <i class="fas fa-code"></i>
+                  </button>
+                  <button @click="insertMarkdown('\n```\n代码块\n```\n')" class="tool-btn" title="代码块">
+                    <i class="fas fa-file-code"></i>
+                  </button>
+                  <button @click="insertMarkdown('$$公式$$')" class="tool-btn" title="LaTeX 公式">
+                    <i class="fas fa-square-root-alt"></i>
+                  </button>
+                  <button @click="insertMarkdown('[链接](url)')" class="tool-btn" title="链接">
+                    <i class="fas fa-link"></i>
+                  </button>
+                  <button @click="insertMarkdown('![图片](url)')" class="tool-btn" title="图片">
+                    <i class="fas fa-image"></i>
+                  </button>
+                </div>
+              </div>
+              <textarea
+                ref="contentInput"
+                v-model="post.content"
+                class="content-editor"
+                placeholder="支持 Markdown 语法和 LaTeX 公式...
 
 Markdown 示例：
 **粗体** *斜体* ~~删除线~~
@@ -83,46 +92,47 @@ $$
 console.log('Hello World');
 ```
 "
-              rows="20"
-            ></textarea>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">标签（可选）</label>
-            <div class="tags-input">
-              <span
-                v-for="(tag, index) in post.tags"
-                :key="index"
-                class="tag-item"
-              >
-                {{ tag }}
-                <button @click="removeTag(index)" class="tag-remove"><i class="fas fa-times"></i></button>
-              </span>
-              <input
-                v-model="newTag"
-                @keydown.enter.prevent="addTag"
-                @keydown.space.prevent="addTag"
-                class="tag-input"
-                placeholder="输入标签后按空格或回车"
-              />
+                rows="20"
+              ></textarea>
             </div>
-          </div>
 
-          <div class="form-actions">
-            <GlassButton variant="outline" @click="goBack">
-              取消
-            </GlassButton>
-            <GlassButton variant="primary" @click="togglePreview">
-              {{ showPreview ? '编辑' : '预览' }}
-            </GlassButton>
-            <GlassButton variant="primary" @click="submitPost" :loading="submitting">
-              发布
-            </GlassButton>
-          </div>
+            <div class="form-group">
+              <label class="form-label">标签（可选）</label>
+              <div class="tags-input">
+                <span
+                  v-for="(tag, index) in post.tags"
+                  :key="index"
+                  class="tag-item"
+                >
+                  {{ tag }}
+                  <button @click="removeTag(index)" class="tag-remove"><i class="fas fa-times"></i></button>
+                </span>
+                <input
+                  v-model="newTag"
+                  @keydown.enter.prevent="addTag"
+                  @keydown.space.prevent="addTag"
+                  class="tag-input"
+                  placeholder="输入标签后按空格或回车"
+                />
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <GlassButton variant="outline" @click="goBack">
+                取消
+              </GlassButton>
+              <GlassButton variant="primary" @click="togglePreview">
+                {{ showPreview ? '编辑' : '预览' }}
+              </GlassButton>
+              <GlassButton variant="primary" @click="submitPost" :loading="submitting">
+                {{ isEditMode ? '保存修改' : '发布' }}
+              </GlassButton>
+            </div>
+          </template>
         </GlassCard>
       </div>
 
-      <div v-if="showPreview" class="preview-section">
+      <div v-if="showPreview && !loadingPost" class="preview-section">
         <GlassCard>
           <div class="preview-header">
             <h2 class="preview-title">预览</h2>
@@ -144,8 +154,8 @@ console.log('Hello World');
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { Marked } from 'marked'
 import { markedHighlight } from 'marked-highlight'
 import katex from 'katex'
@@ -153,9 +163,17 @@ import hljs from 'highlight.js'
 import GlassCard from '@/components/GlassCard.vue'
 import GlassButton from '@/components/GlassButton.vue'
 import GlassInput from '@/components/GlassInput.vue'
-import { createPost } from '@/api/posts'
+import { createPost, updatePost, getPostById } from '@/api/posts'
+import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
+const route = useRoute()
+const userStore = useUserStore()
+
+// 编辑模式相关
+const editPostId = computed(() => route.params.id ? Number(route.params.id) : null)
+const isEditMode = computed(() => !!editPostId.value)
+const loadingPost = ref(false)
 
 const post = ref({
   title: '',
@@ -268,6 +286,34 @@ const goBack = () => {
   router.back()
 }
 
+// 加载要编辑的帖子
+const loadPostForEdit = async () => {
+  if (!editPostId.value) return
+  
+  loadingPost.value = true
+  try {
+    const postData = await getPostById(editPostId.value)
+    
+    // 检查是否是自己的帖子
+    if (postData.author.id !== userStore.user?.id) {
+      alert('您没有权限编辑此帖子')
+      router.push(`/post/${editPostId.value}`)
+      return
+    }
+    
+    // 填充数据
+    post.value.title = postData.title
+    post.value.content = postData.content
+    // 如果有分类和标签字段，也可以填充
+  } catch (error) {
+    console.error('加载帖子失败:', error)
+    alert('加载帖子失败')
+    router.back()
+  } finally {
+    loadingPost.value = false
+  }
+}
+
 const submitPost = async () => {
   if (!post.value.title.trim()) {
     alert('请输入标题')
@@ -282,23 +328,40 @@ const submitPost = async () => {
   submitting.value = true
   
   try {
-    // 调用 API 发布帖子
-    const newPost = await createPost(
-      post.value.title.trim(),
-      post.value.content.trim(),
-      []  // 图片数组，暂时为空
-    )
-    
-    alert('发布成功！')
-    // 跳转到新帖子详情页
-    router.push(`/post/${newPost.id}`)
+    if (isEditMode.value && editPostId.value) {
+      // 编辑模式 - 更新帖子
+      await updatePost(
+        editPostId.value,
+        post.value.title.trim(),
+        post.value.content.trim(),
+        []
+      )
+      alert('修改成功！')
+      router.push(`/post/${editPostId.value}`)
+    } else {
+      // 创建模式 - 发布新帖子
+      const newPost = await createPost(
+        post.value.title.trim(),
+        post.value.content.trim(),
+        []
+      )
+      alert('发布成功！')
+      router.push(`/post/${newPost.id}`)
+    }
   } catch (error) {
-    console.error('发布失败:', error)
-    alert('发布失败，请重试')
+    console.error('操作失败:', error)
+    alert(isEditMode.value ? '修改失败，请重试' : '发布失败，请重试')
   } finally {
     submitting.value = false
   }
 }
+
+// 如果是编辑模式，加载帖子
+onMounted(() => {
+  if (isEditMode.value) {
+    loadPostForEdit()
+  }
+})
 </script>
 
 <style scoped>

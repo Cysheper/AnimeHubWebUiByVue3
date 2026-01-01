@@ -48,11 +48,16 @@
               <h4>支付宝</h4>
               <p>扫描二维码支持</p>
             </div>
-            <div class="donation-method">
+            <a
+              class="donation-method donation-method-link"
+              href="https://github.com/Cysheper/AnimeHubWebUiByVue3"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <div class="donation-icon"><i class="fab fa-github"></i></div>
               <h4>Star项目</h4>
               <p>在GitHub上给我们点个Star</p>
-            </div>
+            </a>
           </div>
         </GlassCard>
 
@@ -91,20 +96,12 @@ onMounted(async () => {
     developers.value = [
       {
         id: 1,
-        name: '主开发者',
+        name: 'Cysheper',
         role: '全栈工程师',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=developer1',
-        github: 'https://github.com',
-        email: 'dev@animehub.com',
+        avatar: 'https://cdn.jsdelivr.net/gh/Cysheper/MyImages@main/uploads/mutsumi01(1).jpg',
+        github: 'https://github.com/cysheper',
+        email: 'cysheper@gmail.com',
         description: '负责项目架构和核心功能开发'
-      },
-      {
-        id: 2,
-        name: 'UI设计师',
-        role: '视觉设计师',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=designer',
-        email: 'designer@animehub.com',
-        description: '负责界面设计和用户体验'
       }
     ]
   }

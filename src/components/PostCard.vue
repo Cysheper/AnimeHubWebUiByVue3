@@ -42,12 +42,22 @@
         <span class="action-icon"><i class="far fa-eye"></i></span>
         <span class="action-count">{{ post.viewCount }}</span>
       </button>
+      <button 
+        v-if="isOwnPost" 
+        class="action-btn edit-btn" 
+        @click.stop="handleEdit"
+      >
+        <span class="action-icon"><i class="fas fa-edit"></i></span>
+        <span class="action-text">编辑</span>
+      </button>
     </div>
   </GlassCard>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/user'
 import GlassCard from './GlassCard.vue'
 import type { Post } from '@/types'
 
@@ -57,11 +67,18 @@ interface Props {
 
 const props = defineProps<Props>()
 const router = useRouter()
+const userStore = useUserStore()
 
 const emit = defineEmits<{
   like: [postId: number]
   click: []
 }>()
+
+// 判断是否是自己的帖子
+const isOwnPost = computed(() => {
+  if (!userStore.user) return false
+  return props.post.author.id === userStore.user.id
+})
 
 const handleLike = () => {
   emit('like', props.post.id)
@@ -74,6 +91,11 @@ const handleClick = () => {
 // 跳转到用户主页
 const goToUserProfile = () => {
   router.push(`/user/${props.post.author.id}`)
+}
+
+// 编辑帖子
+const handleEdit = () => {
+  router.push(`/edit-post/${props.post.id}`)
 }
 
 const formatTime = (time: string) => {
@@ -231,5 +253,18 @@ const truncateText = (text: string, maxLength: number) => {
 .action-count {
   font-size: 14px;
   font-weight: 600;
+}
+
+.action-text {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.edit-btn {
+  margin-left: auto;
+}
+
+.edit-btn:hover {
+  color: rgba(red, green, blue, alpha);
 }
 </style>

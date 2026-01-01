@@ -40,6 +40,20 @@ export const createPost = async (
   return response.data
 }
 
+export const updatePost = async (
+  postId: number,
+  title: string,
+  content: string,
+  images?: string[]
+): Promise<Post> => {
+  const response = await request.put<any, ApiResponse<Post>>(`/posts/${postId}`, {
+    title,
+    content,
+    images
+  })
+  return response.data
+}
+
 export const likePost = async (postId: number): Promise<void> => {
   await request.post(`/posts/${postId}/like`)
 }
