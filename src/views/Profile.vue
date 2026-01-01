@@ -45,13 +45,17 @@
               </div>
             </div>
             <div class="profile-meta">
-              <span class="meta-item">
+              <span class="meta-item" color="black">
                 <i class="far fa-calendar-alt"></i>
                 加入于 {{ formatDate(userProfile.createdAt) }}
               </span>
               <span class="meta-item" v-if="userProfile.email">
                 <i class="far fa-envelope"></i>
                 {{ userProfile.email }}
+              </span>
+              <span class="meta-item" v-if="userProfile.id">
+                <i class="far fa-envelope"></i>
+                UID: {{ userProfile.id }}
               </span>
             </div>
             <div class="profile-actions">

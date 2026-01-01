@@ -50,7 +50,11 @@
               <div class="profile-meta">
                 <span class="meta-item">
                   <i class="far fa-calendar-alt"></i>
-                  加入于 {{ formatDate(userProfile.createdAt) }}
+                  加入于 {{ formatDate(userProfile.createdAt) }}   
+                </span>
+                <span class="meta-item">
+                  <i class="far fa-calendar-alt"></i>
+                  UID: {{ userProfile.id }}
                 </span>
               </div>
               <div class="profile-actions" v-if="!isOwnProfile">
@@ -410,8 +414,8 @@ onMounted(async () => {
 }
 
 .avatar-wrapper {
-  width: 120px;
-  height: 120px;
+  width: 160px;
+  height: 160px;
   border-radius: 50%;
   border: 4px solid var(--glass-bg);
   overflow: hidden;

@@ -12,7 +12,7 @@
     <header class="header glass">
       <div class="header-content">
         <div class="logo">
-          <h1 class="gradient-text">动漫Hub</h1>
+          <h1 class="gradient-text" v-on:click="">AnimeHub</h1>
         </div>
 
         <nav class="nav">

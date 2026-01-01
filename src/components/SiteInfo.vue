@@ -9,10 +9,10 @@
 
     <div class="admin-section">
       <div class="admin-avatar">
-        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=admin" alt="站长" />
+        <img src="https://cdn.jsdelivr.net/gh/Cysheper/MyImages@main/uploads/mutsumi01(1).jpg" alt="站长" />
       </div>
-      <h3 class="admin-name">站长大人</h3>
-      <p class="admin-title">动漫Hub创始人</p>
+      <h3 class="admin-name">Cysheper</h3>
+      <p class="admin-title">站长</p>
     </div>
 
     <div class="stats-section">
@@ -167,8 +167,8 @@ onMounted(async () => {
 }
 
 .admin-avatar {
-  width: 80px;
-  height: 80px;
+  width: 200px;
+  height: 200px;
   margin: 0 auto 16px;
   border-radius: 50%;
   overflow: hidden;
