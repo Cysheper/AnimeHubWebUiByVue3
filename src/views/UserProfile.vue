@@ -128,7 +128,6 @@ import GlassCard from '@/components/GlassCard.vue'
 import GlassButton from '@/components/GlassButton.vue'
 import PostCard from '@/components/PostCard.vue'
 import type { Post } from '@/types'
-import type { User } from '@/types'
 
 const route = useRoute()
 const router = useRouter()

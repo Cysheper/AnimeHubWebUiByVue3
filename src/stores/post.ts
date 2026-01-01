@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { Post, Comment } from '@/types'
+import type { Post } from '@/types'
 import { 
   getPosts, 
   getHotPosts, 

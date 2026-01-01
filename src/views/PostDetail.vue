@@ -124,7 +124,6 @@ import { useUserStore } from '@/stores/user'
 import GlassCard from '@/components/GlassCard.vue'
 import GlassButton from '@/components/GlassButton.vue'
 import GlassInput from '@/components/GlassInput.vue'
-import SiteInfo from '@/components/SiteInfo.vue'
 import AuthorCard from '@/components/AuthorCard.vue'
 
 const route = useRoute()
