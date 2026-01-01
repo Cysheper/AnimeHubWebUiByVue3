@@ -1,0 +1,6 @@
+name = "anime-hub"
+compatibility_date = "2026-01-01"
+
+# 静态资源目录（构建产物）
+[site]
+bucket = "./dist"
