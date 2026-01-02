@@ -1,13 +1,8 @@
 import axios from 'axios'
 import type { AxiosInstance, AxiosResponse } from 'axios'
 
-// 生产环境使用实际后端地址，开发环境使用代理
-const baseURL = import.meta.env.PROD 
-  ? 'https://ani.cysheper.top/api' 
-  : '/api'
-
 const instance: AxiosInstance = axios.create({
-  baseURL,
+  baseURL: 'https://ani.cysheper.top/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'
