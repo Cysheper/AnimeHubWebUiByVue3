@@ -238,6 +238,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { usePostStore } from '@/stores/post'
+import { API_BASE_URL } from '@/api/request'
 import GlassCard from '@/components/GlassCard.vue'
 import GlassButton from '@/components/GlassButton.vue'
 import GlassInput from '@/components/GlassInput.vue'
@@ -296,7 +297,7 @@ const settings = ref({
 // 保存设置
 const saveSettings = async () => {
   try {
-    const response = await fetch('/api/users/settings', {
+    const response = await fetch(`${API_BASE_URL}/users/settings`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -332,7 +333,7 @@ const handleAvatarChange = async (event: Event) => {
     formData.append('avatar', file)
     
     try {
-      const response = await fetch('/api/users/avatar', {
+      const response = await fetch(`${API_BASE_URL}/users/avatar`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${userStore.token}`
@@ -395,7 +396,7 @@ const handleUpdateProfile = async () => {
       signature: editForm.value.signature
     }
     
-    const response = await fetch('/api/users/profile', {
+    const response = await fetch(`${API_BASE_URL}/users/profile`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -425,7 +426,7 @@ const handleUpdateProfile = async () => {
     
     // 如果要更改密码，单独调用密码接口
     if (editForm.value.newPassword) {
-      const passwordResponse = await fetch('/api/users/password', {
+      const passwordResponse = await fetch(`${API_BASE_URL}/users/password`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -471,7 +472,7 @@ const handleDeleteAccount = async () => {
       if (!password) return
       
       try {
-        const response = await fetch('/api/users/account', {
+        const response = await fetch(`${API_BASE_URL}/users/account`, {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
@@ -546,7 +547,7 @@ const loadUserPosts = async () => {
 const loadFavoritePosts = async () => {
   loadingFavorites.value = true
   try {
-    const response = await fetch('/api/users/favorites', {
+    const response = await fetch(`${API_BASE_URL}/users/favorites`, {
       headers: {
         'Authorization': `Bearer ${userStore.token}`
       }
@@ -573,7 +574,7 @@ onMounted(async () => {
   
   // 加载用户完整信息 - 使用 token 获取当前用户信息，不需要传 ID
   try {
-    const response = await fetch('/api/auth/user', {
+    const response = await fetch(`${API_BASE_URL}/auth/user`, {
       headers: {
         'Authorization': `Bearer ${userStore.token}`
       }
@@ -610,7 +611,7 @@ onMounted(async () => {
   
   // 加载用户设置
   try {
-    const response = await fetch('/api/users/settings', {
+    const response = await fetch(`${API_BASE_URL}/users/settings`, {
       headers: {
         'Authorization': `Bearer ${userStore.token}`
       }

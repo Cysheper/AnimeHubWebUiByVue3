@@ -125,6 +125,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { usePostStore } from '@/stores/post'
+import { API_BASE_URL } from '@/api/request'
 import GlassCard from '@/components/GlassCard.vue'
 import GlassButton from '@/components/GlassButton.vue'
 import PostCard from '@/components/PostCard.vue'
@@ -232,7 +233,7 @@ const handleFollow = async () => {
 const loadUserProfile = async (userId: number) => {
   loading.value = true
   try {
-    const response = await fetch(`/api/users/${userId}/profile`, {
+    const response = await fetch(`${API_BASE_URL}/users/${userId}/profile`, {
       headers: userStore.token ? {
         'Authorization': `Bearer ${userStore.token}`
       } : {}
@@ -265,7 +266,7 @@ const loadUserPosts = async () => {
 
   loadingPosts.value = true
   try {
-    const response = await fetch(`/api/users/${userProfile.value.id}/posts`, {
+    const response = await fetch(`${API_BASE_URL}/users/${userProfile.value.id}/posts`, {
       headers: userStore.token ? {
         'Authorization': `Bearer ${userStore.token}`
       } : {}

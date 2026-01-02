@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { User } from '@/types'
 import { login as apiLogin, register as apiRegister, getUserInfo, getUser} from '@/api/auth'
+import { API_BASE_URL } from '@/api/request'
 
 export const useUserStore = defineStore('user', () => {
   const user = ref<User | null>(null)
@@ -40,7 +41,7 @@ export const useUserStore = defineStore('user', () => {
     if (!user.value || isFollowing(userId)) return false
     
     try {
-      const response = await fetch(`/api/users/${userId}/follow`, {
+      const response = await fetch(`${API_BASE_URL}/users/${userId}/follow`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token.value}`
@@ -62,7 +63,7 @@ export const useUserStore = defineStore('user', () => {
     if (!user.value || !isFollowing(userId)) return false
     
     try {
-      const response = await fetch(`/api/users/${userId}/follow`, {
+      const response = await fetch(`${API_BASE_URL}/users/${userId}/follow`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token.value}`

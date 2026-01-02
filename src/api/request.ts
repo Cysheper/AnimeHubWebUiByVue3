@@ -1,8 +1,10 @@
 import axios from 'axios'
 import type { AxiosInstance, AxiosResponse } from 'axios'
 
+export const API_BASE_URL = 'https://ani.cysheper.top/api'
+
 const instance: AxiosInstance = axios.create({
-  baseURL: 'https://ani.cysheper.top/api',
+  baseURL: API_BASE_URL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'
