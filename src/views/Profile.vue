@@ -54,7 +54,7 @@
                 {{ userProfile.email }}
               </span>
               <span class="meta-item" v-if="userProfile.id">
-                <i class="far fa-envelope"></i>
+                <i class="fa-solid fa-id-badge"></i>
                 UID: {{ userProfile.id }}
               </span>
             </div>
@@ -775,7 +775,7 @@ onMounted(async () => {
 }
 
 .meta-item i {
-  color: var(--primary-color);
+  color: rgba(22, 20, 22, 0.9);;
 }
 
 .profile-actions {
@@ -813,13 +813,13 @@ onMounted(async () => {
 
 .tab-item:hover {
   color: var(--text-primary);
-  background: rgba(var(--primary-rgb), 0.05);
+  background: rgba(22, 20, 22, 0.2)
 }
 
 .tab-item.active {
-  color: var(--primary-color);
+  color: black;
   border-bottom-color: var(--primary-color);
-  background: rgba(var(--primary-rgb), 0.1);
+  background: rgba(22, 20, 22, 0.4)
 }
 
 /* 内容区域 */

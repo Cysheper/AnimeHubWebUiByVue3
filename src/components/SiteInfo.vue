@@ -7,7 +7,7 @@
       </button>
     </div>
 
-    <div class="admin-section">
+    <div class="admin-section" @click="goToSiterProfile">
       <div class="admin-avatar">
         <img src="https://cdn.jsdelivr.net/gh/Cysheper/MyImages@main/uploads/mutsumi01(1).jpg" alt="站长" />
       </div>
@@ -102,6 +102,10 @@ const toggleTheme = () => {
 
 const goToProfile = () => {
   router.push('/profile')
+}
+
+const goToSiterProfile = () => {
+  router.push('/user/1')
 }
 
 const drawFortune = async () => {

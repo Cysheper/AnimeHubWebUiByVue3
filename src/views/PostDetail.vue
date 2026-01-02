@@ -98,6 +98,17 @@
                   <div class="comment-header">
                     <span class="comment-author clickable" @click="goToUserProfile(comment.author.id)">{{ comment.author.username }}</span>
                     <span class="comment-time">{{ formatTime(comment.createdAt) }}</span>
+                    <!-- 三点菜单（仅作者可见） -->
+                    <div v-if="isOwnComment(comment.author.id)" class="comment-menu-wrapper">
+                      <button class="comment-menu-btn" @click.stop="toggleCommentMenu(comment.id)">
+                        <i class="fas fa-ellipsis-h"></i>
+                      </button>
+                      <div v-if="activeCommentMenu === comment.id" class="comment-dropdown">
+                        <button class="dropdown-item delete" @click.stop="handleDeleteComment(comment.id)">
+                          <i class="fas fa-trash"></i> 删除
+                        </button>
+                      </div>
+                    </div>
                   </div>
                   <p class="comment-text">{{ comment.content }}</p>
                   <div class="comment-actions">
@@ -125,10 +136,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePostStore } from '@/stores/post'
 import { useUserStore } from '@/stores/user'
+import { deleteComment } from '@/api/posts'
+import { containsForbiddenWords } from '@/utils/forbidden'
 import { Marked } from 'marked'
 import { markedHighlight } from 'marked-highlight'
 import katex from 'katex'
@@ -137,6 +150,17 @@ import GlassCard from '@/components/GlassCard.vue'
 import GlassButton from '@/components/GlassButton.vue'
 import GlassInput from '@/components/GlassInput.vue'
 import AuthorCard from '@/components/AuthorCard.vue'
+
+type AuthorInfo = {
+  id: number
+  username: string
+  avatar: string
+  signature?: string
+  postsCount?: number
+  likesCount?: number
+  followersCount?: number
+  createdAt: string
+}
 
 const route = useRoute()
 const router = useRouter()
@@ -148,6 +172,8 @@ const commenting = ref(false)
 const newComment = ref('')
 const post = computed(() => postStore.currentPost)
 const isLoggedIn = computed(() => userStore.isLoggedIn)
+const authorInfo = ref<AuthorInfo | null>(null)
+const activeCommentMenu = ref<number | null>(null)
 
 // 配置 marked（Markdown 渲染）
 const md = new Marked(
@@ -199,20 +225,51 @@ const renderedContent = computed(() => {
   return md.parse(content) as string
 })
 
-// 作者信息（从帖子中获取）
-const authorInfo = computed(() => {
-  if (!post.value) return null
-  return {
-    id: post.value.author.id,
-    username: post.value.author.username,
-    avatar: post.value.author.avatar,
-    signature: post.value.author.signature || '',
-    postsCount: post.value.author.postsCount || 0,
-    likesCount: post.value.author.likesCount || 0,
-    followersCount: post.value.author.followersCount || 0,
-    createdAt: post.value.author.createdAt
+const fetchAuthorInfo = async () => {
+  if (!post.value) {
+    authorInfo.value = null
+    return
   }
-})
+
+  try {
+    const response = await fetch(`/api/users/${post.value.author.id}/profile`)
+
+    if (response.ok) {
+      const result = await response.json()
+
+      const profile = result.data
+      profile.followersCount = profile.followersList?.length || 0
+      profile.followingCount = profile.followingList?.length || 0
+      profile.postsCount = profile.postsCount ?? 0
+      profile.likesCount = profile.likesCount ?? 0
+
+      authorInfo.value = {
+        id: post.value.author.id,
+        username: post.value.author.username,
+        avatar: post.value.author.avatar,
+        signature: profile.signature || '',
+        postsCount: profile.postsCount || 0,
+        likesCount: profile.likesCount || 0,
+        followersCount: profile.followersCount || 0,
+        createdAt: profile.createdAt,
+      }
+    } else {
+      authorInfo.value = {
+        id: post.value.author.id,
+        username: post.value.author.username,
+        avatar: post.value.author.avatar,
+        signature: post.value.author.signature || '',
+        postsCount: post.value.author.postsCount || 0,
+        likesCount: post.value.author.likesCount || 0,
+        followersCount: post.value.author.followersCount || 0,
+        createdAt: post.value.author.createdAt
+      }
+    }
+  } catch (error) {
+    console.error('加载用户信息失败:', error)
+    authorInfo.value = null
+  }
+}
 
 // 判断是否是自己的帖子
 const isOwnPost = computed(() => {
@@ -232,7 +289,42 @@ const goToUserProfile = (userId: number) => {
 // 编辑帖子
 const handleEdit = () => {
   if (post.value) {
-    router.push(`/edit-post/${post.value.id}`)
+    router.push(`/post/${post.value.id}/edit`)
+  }
+}
+
+// 判断是否是自己的评论
+const isOwnComment = (authorId: number) => {
+  return userStore.user?.id === authorId
+}
+
+// 切换评论菜单
+const toggleCommentMenu = (commentId: number) => {
+  if (activeCommentMenu.value === commentId) {
+    activeCommentMenu.value = null
+  } else {
+    activeCommentMenu.value = commentId
+  }
+}
+
+// 点击其他地方关闭菜单
+const handleClickOutside = () => {
+  activeCommentMenu.value = null
+}
+
+// 删除评论
+const handleDeleteComment = async (commentId: number) => {
+  if (!confirm('确定要删除这条评论吗？')) return
+  
+  try {
+    await deleteComment(commentId)
+    // 重新加载帖子以刷新评论列表
+    if (post.value) {
+      await postStore.fetchPostById(post.value.id)
+    }
+    activeCommentMenu.value = null
+  } catch (error) {
+    alert('删除失败，请稍后重试')
   }
 }
 
@@ -248,6 +340,12 @@ const handleLike = async () => {
 
 const handleComment = async () => {
   if (!post.value || !newComment.value.trim()) return
+
+  // 违禁词检查
+  if (containsForbiddenWords(newComment.value)) {
+    alert('含有违规内容，发表失败')
+    return
+  }
 
   commenting.value = true
   try {
@@ -279,6 +377,14 @@ const formatTime = (time: string) => {
   return date.toLocaleDateString('zh-CN')
 }
 
+watch(
+  () => post.value?.author?.id,
+  async () => {
+    await fetchAuthorInfo()
+  },
+  { immediate: true }
+)
+
 onMounted(async () => {
   const postId = Number(route.params.id)
   if (!postId) {
@@ -295,6 +401,13 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
+  
+  // 添加点击外部关闭菜单
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
 })
 </script>
 
@@ -738,6 +851,73 @@ onMounted(async () => {
 .comment-like-btn.liked {
   color: var(--text-primary);
   background: rgba(255, 255, 255, 0.15);
+}
+
+/* 评论菜单样式 */
+.comment-menu-wrapper {
+  position: relative;
+  margin-left: auto;
+}
+
+.comment-menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: 50%;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.comment-menu-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.comment-dropdown {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 4px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  min-width: 100px;
+  z-index: 100;
+  overflow: hidden;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: var(--transition);
+  text-align: left;
+}
+
+.dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.dropdown-item.delete {
+  color: #ff6b6b;
+}
+
+.dropdown-item.delete:hover {
+  background: rgba(255, 107, 107, 0.1);
 }
 
 @media (max-width: 1024px) {

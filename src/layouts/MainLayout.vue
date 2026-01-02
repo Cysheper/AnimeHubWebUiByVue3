@@ -39,6 +39,16 @@
         </nav>
 
         <div class="user-actions">
+          <div class="search-box">
+            <i class="fas fa-search search-icon"></i>
+            <input
+              v-model="searchKeyword"
+              type="text"
+              class="search-input"
+              placeholder="搜索帖子..."
+              @keydown.enter="handleSearch"
+            />
+          </div>
           <button v-if="!isLoggedIn" class="login-btn" @click="goToLogin">
             登录
           </button>
@@ -62,7 +72,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { RouterLink, RouterView, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 
@@ -71,6 +81,7 @@ const userStore = useUserStore()
 
 const isLoggedIn = computed(() => userStore.isLoggedIn)
 const user = computed(() => userStore.user)
+const searchKeyword = ref('')
 
 const goToLogin = () => {
   router.push('/login')
@@ -83,6 +94,13 @@ const goToProfile = () => {
 const handleLogout = () => {
   userStore.logout()
   router.push('/')
+}
+
+const handleSearch = () => {
+  if (searchKeyword.value.trim()) {
+    router.push({ path: '/search', query: { keyword: searchKeyword.value.trim() } })
+    searchKeyword.value = ''
+  }
 }
 
 onMounted(() => {
@@ -201,6 +219,34 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+}
+
+.search-icon {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.search-input {
+  width: 160px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+}
+
+.search-input::placeholder {
+  color: var(--text-muted);
 }
 
 .login-btn {

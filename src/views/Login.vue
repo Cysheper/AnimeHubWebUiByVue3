@@ -85,6 +85,19 @@
             icon="fas fa-lock"
             autocomplete="new-password"
           />
+          <div class="captcha-group">
+            <GlassInput
+              v-model="registerForm.captcha"
+              label="验证码"
+              placeholder="请输入验证码"
+              icon="fas fa-shield-alt"
+              autocomplete="off"
+              class="captcha-input"
+            />
+            <div class="captcha-box" @click="refreshCaptcha">
+              <canvas ref="captchaCanvas" width="120" height="40"></canvas>
+            </div>
+          </div>
           <GlassButton type="submit" variant="primary" :loading="loading" class="submit-btn">
             注册
           </GlassButton>
@@ -101,7 +114,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import GlassCard from '@/components/GlassCard.vue'
@@ -113,6 +126,8 @@ const userStore = useUserStore()
 
 const activeTab = ref<'login' | 'register'>('login')
 const loading = ref(false)
+const captchaCanvas = ref<HTMLCanvasElement | null>(null)
+const captchaCode = ref('')
 
 const loginForm = ref({
   username: '',
@@ -123,7 +138,84 @@ const registerForm = ref({
   username: '',
   email: '',
   password: '',
-  confirmPassword: ''
+  confirmPassword: '',
+  captcha: ''
+})
+
+// 生成随机验证码
+const generateCaptcha = () => {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
+  let code = ''
+  for (let i = 0; i < 4; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  captchaCode.value = code
+  return code
+}
+
+// 绘制验证码
+const drawCaptcha = () => {
+  const canvas = captchaCanvas.value
+  if (!canvas) return
+  
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+  
+  const code = generateCaptcha()
+  const width = canvas.width
+  const height = canvas.height
+  
+  // 清空画布
+  ctx.clearRect(0, 0, width, height)
+  ctx.fillStyle = '#2a2a3e'
+  ctx.fillRect(0, 0, width, height)
+  
+  // 绘制干扰线
+  for (let i = 0; i < 4; i++) {
+    ctx.strokeStyle = `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.5)`
+    ctx.beginPath()
+    ctx.moveTo(Math.random() * width, Math.random() * height)
+    ctx.lineTo(Math.random() * width, Math.random() * height)
+    ctx.stroke()
+  }
+  
+  // 绘制干扰点
+  for (let i = 0; i < 30; i++) {
+    ctx.fillStyle = `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.8)`
+    ctx.beginPath()
+    ctx.arc(Math.random() * width, Math.random() * height, 1, 0, 2 * Math.PI)
+    ctx.fill()
+  }
+  
+  // 绘制验证码文字
+  const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dfe6e9']
+  for (let i = 0; i < code.length; i++) {
+    ctx.font = `${20 + Math.random() * 10}px Arial`
+    ctx.fillStyle = colors[Math.floor(Math.random() * colors.length)]
+    ctx.save()
+    ctx.translate(25 + i * 25, 28)
+    ctx.rotate((Math.random() - 0.5) * 0.4)
+    ctx.fillText(code[i], 0, 0)
+    ctx.restore()
+  }
+}
+
+// 刷新验证码
+const refreshCaptcha = () => {
+  drawCaptcha()
+}
+
+// 监听 tab 切换，切换到注册时生成验证码
+watch(activeTab, (newTab) => {
+  if (newTab === 'register') {
+    setTimeout(drawCaptcha, 100)
+  }
+})
+
+onMounted(() => {
+  if (activeTab.value === 'register') {
+    drawCaptcha()
+  }
 })
 
 const handleLogin = async () => {
@@ -156,7 +248,8 @@ const handleRegister = async () => {
     !registerForm.value.username ||
     !registerForm.value.email ||
     !registerForm.value.password ||
-    !registerForm.value.confirmPassword
+    !registerForm.value.confirmPassword ||
+    !registerForm.value.captcha
   ) {
     alert('请填写完整信息')
     return
@@ -164,6 +257,14 @@ const handleRegister = async () => {
 
   if (registerForm.value.password !== registerForm.value.confirmPassword) {
     alert('两次密码输入不一致')
+    return
+  }
+
+  // 验证码校验（不区分大小写）
+  if (registerForm.value.captcha.toLowerCase() !== captchaCode.value.toLowerCase()) {
+    alert('验证码错误')
+    refreshCaptcha()
+    registerForm.value.captcha = ''
     return
   }
 
@@ -178,6 +279,7 @@ const handleRegister = async () => {
     activeTab.value = 'login'
   } catch (error) {
     alert('注册失败，请稍后重试')
+    refreshCaptcha()
   } finally {
     loading.value = false
   }
@@ -299,6 +401,34 @@ const goToHome = () => {
 
 .form {
   margin-bottom: 24px;
+}
+
+.captcha-group {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.captcha-group .captcha-input {
+  flex: 1;
+}
+
+.captcha-box {
+  flex-shrink: 0;
+  cursor: pointer;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+  transition: var(--transition);
+  margin-bottom: 24px;
+}
+
+.captcha-box:hover {
+  border-color: var(--primary-color);
+}
+
+.captcha-box canvas {
+  display: block;
 }
 
 .submit-btn {

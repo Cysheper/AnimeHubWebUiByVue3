@@ -22,6 +22,13 @@ export const getRecommendedPosts = async (page = 1, limit = 20): Promise<Post[]>
   return response.data.items
 }
 
+export const searchPosts = async (keyword: string, page = 1, limit = 20): Promise<Post[]> => {
+  const response = await request.get<any, ApiResponse<PaginatedResponse<Post>>>('/posts/search', {
+    params: { keyword, page, limit }
+  })
+  return response.data.items
+}
+
 export const getPostById = async (id: number): Promise<Post> => {
   const response = await request.get<any, ApiResponse<Post>>(`/posts/${id}`)
   return response.data
@@ -67,4 +74,12 @@ export const createComment = async (postId: number, content: string): Promise<Co
 
 export const likeComment = async (commentId: number): Promise<void> => {
   await request.post(`/comments/${commentId}/like`)
+}
+
+export const deletePost = async (postId: number): Promise<void> => {
+  await request.delete(`/posts/${postId}`)
+}
+
+export const deleteComment = async (commentId: number): Promise<void> => {
+  await request.delete(`/comments/${commentId}`)
 }

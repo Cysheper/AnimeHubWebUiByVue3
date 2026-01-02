@@ -17,15 +17,15 @@
 
     <div class="post-content">
       <h3 class="post-title">{{ post.title }}</h3>
-      <p class="post-text">{{ truncateText(post.content, 200) }}</p>
-      <div v-if="post.images && post.images.length > 0" class="post-images">
-        <img
-          v-for="(image, index) in post.images.slice(0, 3)"
-          :key="index"
-          :src="image"
-          :alt="`图片 ${index + 1}`"
-          class="post-image"
+      <div class="post-body" :class="{ 'has-image': firstImageUrl }">
+        <!-- 显示内容中的第一张图片 -->
+        <img 
+          v-if="firstImageUrl" 
+          :src="firstImageUrl" 
+          alt="帖子图片" 
+          class="content-image"
         />
+        <div class="post-text" v-html="renderedContent"></div>
       </div>
     </div>
 
@@ -58,6 +58,10 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { Marked } from 'marked'
+import { markedHighlight } from 'marked-highlight'
+import katex from 'katex'
+import hljs from 'highlight.js'
 import GlassCard from './GlassCard.vue'
 import type { Post } from '@/types'
 
@@ -73,6 +77,81 @@ const emit = defineEmits<{
   like: [postId: number]
   click: []
 }>()
+
+// 配置 marked
+const md = new Marked(
+  markedHighlight({
+    langPrefix: 'hljs language-',
+    highlight(code, lang) {
+      const language = lang && hljs.getLanguage(lang) ? lang : 'plaintext'
+      return hljs.highlight(code, { language }).value
+    }
+  })
+)
+
+md.setOptions({
+  breaks: true,
+  gfm: true
+})
+
+// 从内容中提取第一张图片链接
+const firstImageUrl = computed(() => {
+  const content = props.post.content
+  // 匹配 Markdown 图片语法 ![alt](url) 或直接的图片链接
+  const mdImageMatch = content.match(/!\[.*?\]\((.*?)\)/)
+  if (mdImageMatch) return mdImageMatch[1]
+  
+  // 匹配常见图片链接
+  const urlMatch = content.match(/https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp)/i)
+  if (urlMatch) return urlMatch[0]
+  
+  // 如果 post.images 有内容，返回第一张
+  if (props.post.images && props.post.images.length > 0) {
+    return props.post.images[0]
+  }
+  
+  return null
+})
+
+// 渲染 Markdown 和 LaTeX（截断版本）
+const renderedContent = computed(() => {
+  let content = props.post.content
+  
+  // 移除图片语法，避免重复显示
+  content = content.replace(/!\[.*?\]\(.*?\)/g, '')
+  
+  // 截断内容
+  if (content.length > 200) {
+    content = content.substring(0, 200) + '...'
+  }
+  
+  // 处理块级 LaTeX 公式 $$...$$
+  content = content.replace(/\$\$([\s\S]+?)\$\$/g, (_match, formula) => {
+    try {
+      return '<div class="latex-block">' + katex.renderToString(formula.trim(), {
+        displayMode: true,
+        throwOnError: false
+      }) + '</div>'
+    } catch {
+      return '<span class="latex-error">LaTeX 错误</span>'
+    }
+  })
+  
+  // 处理行内 LaTeX 公式 $...$
+  content = content.replace(/\$([^\$\n]+?)\$/g, (_match, formula) => {
+    try {
+      return '<span class="latex-inline">' + katex.renderToString(formula, {
+        displayMode: false,
+        throwOnError: false
+      }) + '</span>'
+    } catch {
+      return '<span class="latex-error">LaTeX 错误</span>'
+    }
+  })
+  
+  // 渲染 Markdown
+  return md.parse(content) as string
+})
 
 // 判断是否是自己的帖子
 const isOwnPost = computed(() => {
@@ -95,7 +174,7 @@ const goToUserProfile = () => {
 
 // 编辑帖子
 const handleEdit = () => {
-  router.push(`/edit-post/${props.post.id}`)
+  router.push(`/post/${props.post.id}/edit`)
 }
 
 const formatTime = (time: string) => {
@@ -111,11 +190,6 @@ const formatTime = (time: string) => {
   if (hours < 24) return `${hours}小时前`
   if (days < 7) return `${days}天前`
   return date.toLocaleDateString('zh-CN')
-}
-
-const truncateText = (text: string, maxLength: number) => {
-  if (text.length <= maxLength) return text
-  return text.substring(0, maxLength) + '...'
 }
 </script>
 
@@ -189,11 +263,67 @@ const truncateText = (text: string, maxLength: number) => {
   line-height: 1.4;
 }
 
+.post-body {
+  display: block;
+}
+
+.post-body.has-image {
+  display: flex;
+  gap: 16px;
+}
+
+.content-image {
+  width: 160px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  flex-shrink: 0;
+}
+
+.post-body.has-image .post-text {
+  flex: 1;
+  min-width: 0;
+  max-height: 120px;
+  overflow: hidden;
+}
+
 .post-text {
   font-size: 15px;
   color: var(--text-secondary);
   line-height: 1.6;
-  margin-bottom: 12px;
+}
+
+.post-text :deep(p) {
+  margin: 0 0 8px 0;
+}
+
+.post-text :deep(h1),
+.post-text :deep(h2),
+.post-text :deep(h3) {
+  font-size: 16px;
+  margin: 8px 0;
+  color: var(--text-primary);
+}
+
+.post-text :deep(code) {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.post-text :deep(pre) {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+
+.post-text :deep(.latex-block),
+.post-text :deep(.latex-inline) {
+  overflow-x: auto;
 }
 
 .post-images {

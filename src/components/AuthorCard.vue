@@ -77,10 +77,9 @@ const emit = defineEmits<{
 
 const router = useRouter()
 const userStore = useUserStore()
-
 const followLoading = ref(false)
-
 // 从 store 的关注列表判断是否已关注
+
 const isFollowing = computed(() => {
   return userStore.isFollowing(props.author.id)
 })
@@ -116,7 +115,8 @@ const handleFollow = async () => {
   } finally {
     followLoading.value = false
   }
-}
+};
+
 </script>
 
 <style scoped>

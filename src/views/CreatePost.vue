@@ -128,6 +128,23 @@ console.log('Hello World');
                 {{ isEditMode ? '保存修改' : '发布' }}
               </GlassButton>
             </div>
+            
+            <!-- 删除按钮（仅编辑模式显示） -->
+            <div v-if="isEditMode" class="danger-zone">
+              <div class="danger-header">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>危险操作</span>
+              </div>
+              <p class="danger-description">删除帖子后将无法恢复，请谨慎操作。</p>
+              <GlassButton 
+                variant="outline" 
+                class="delete-btn" 
+                @click="handleDeletePost" 
+                :loading="deleting"
+              >
+                <i class="fas fa-trash"></i> 删除帖子
+              </GlassButton>
+            </div>
           </template>
         </GlassCard>
       </div>
@@ -163,8 +180,9 @@ import hljs from 'highlight.js'
 import GlassCard from '@/components/GlassCard.vue'
 import GlassButton from '@/components/GlassButton.vue'
 import GlassInput from '@/components/GlassInput.vue'
-import { createPost, updatePost, getPostById } from '@/api/posts'
+import { createPost, updatePost, getPostById, deletePost } from '@/api/posts'
 import { useUserStore } from '@/stores/user'
+import { containsForbiddenWords } from '@/utils/forbidden'
 
 const router = useRouter()
 const route = useRoute()
@@ -185,6 +203,7 @@ const post = ref({
 const newTag = ref('')
 const showPreview = ref(false)
 const submitting = ref(false)
+const deleting = ref(false)
 const contentInput = ref<HTMLTextAreaElement>()
 
 // 配置 marked（v5+ 不再支持在 setOptions 里使用 highlight）
@@ -324,6 +343,12 @@ const submitPost = async () => {
     alert('请输入内容')
     return
   }
+
+  // 违禁词检查
+  if (containsForbiddenWords(post.value.title) || containsForbiddenWords(post.value.content)) {
+    alert('含有违规内容，发表失败')
+    return
+  }
   
   submitting.value = true
   
@@ -353,6 +378,25 @@ const submitPost = async () => {
     alert(isEditMode.value ? '修改失败，请重试' : '发布失败，请重试')
   } finally {
     submitting.value = false
+  }
+}
+
+// 删除帖子
+const handleDeletePost = async () => {
+  if (!editPostId.value) return
+  
+  if (!confirm('确定要删除这篇帖子吗？删除后将无法恢复。')) return
+  
+  deleting.value = true
+  try {
+    await deletePost(editPostId.value)
+    alert('帖子已删除')
+    router.push('/')
+  } catch (error) {
+    console.error('删除失败:', error)
+    alert('删除失败，请重试')
+  } finally {
+    deleting.value = false
   }
 }
 
@@ -539,6 +583,41 @@ onMounted(() => {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
+}
+
+/* 危险操作区域 */
+.danger-zone {
+  margin-top: 40px;
+  padding: 20px;
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  border-radius: 12px;
+  background: rgba(255, 107, 107, 0.05);
+}
+
+.danger-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #ff6b6b;
+  margin-bottom: 8px;
+}
+
+.danger-description {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
+.delete-btn {
+  color: #ff6b6b !important;
+  border-color: rgba(255, 107, 107, 0.5) !important;
+}
+
+.delete-btn:hover {
+  background: rgba(255, 107, 107, 0.1) !important;
+  border-color: #ff6b6b !important;
 }
 
 .preview-section {

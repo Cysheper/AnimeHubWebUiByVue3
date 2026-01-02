@@ -49,11 +49,12 @@
               </div>
               <div class="profile-meta">
                 <span class="meta-item">
-                  <i class="far fa-calendar-alt"></i>
+                  <i class="fa-chisel fa-regular fa-calendar"></i>
                   加入于 {{ formatDate(userProfile.createdAt) }}   
                 </span>
+                
                 <span class="meta-item">
-                  <i class="far fa-calendar-alt"></i>
+                  <i class="fa-solid fa-id-badge"></i>
                   UID: {{ userProfile.id }}
                 </span>
               </div>
@@ -165,7 +166,6 @@ const userPosts = ref<Post[]>([])
 // 从 store 的关注列表判断是否已关注
 const isFollowing = computed(() => {
   if (!userProfile.value) return false
-  console.log(userProfile.value.id)
   return userStore.isFollowing(userProfile.value.id)
 })
 
@@ -274,7 +274,6 @@ const loadUserPosts = async () => {
     if (response.ok) {
       const result = await response.json()
       userPosts.value = result.data.items || []
-      console.log(userPosts)
     }
   } catch (error) {
     console.error('加载用户帖子失败:', error)
@@ -473,6 +472,9 @@ onMounted(async () => {
 
 .profile-meta {
   margin-bottom: 16px;
+  display: flex;
+  justify-content: center;
+  gap: 24px;
 }
 
 .meta-item {
@@ -480,11 +482,11 @@ onMounted(async () => {
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: var(--text-secondary);
+  color: rgba(22, 20, 22);
 }
 
 .meta-item i {
-  color: var(--primary-color);
+  color: rgba(22, 20, 22, 0.8);
 }
 
 .profile-actions {
@@ -530,7 +532,7 @@ onMounted(async () => {
 }
 
 .tab-item.active {
-  color: var(--primary-color);
+  color: rgba(22, 20, 22, 0.9);
   border-bottom-color: var(--primary-color);
   background: rgba(var(--primary-rgb), 0.1);
 }

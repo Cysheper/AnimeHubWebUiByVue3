@@ -112,17 +112,14 @@ export const useUserStore = defineStore('user', () => {
       try {
         // 先获取基本用户信息（包含 isAdmin）
         const us = await getUserInfo()
-        console.log('getUserInfo 返回:', us)
         
         // 获取详细用户信息
         const userData = await getUser()
-        console.log('getUser 返回:', userData)
         userData.followersCount = userData.followersList?.length ?? 0
         userData.followingCount = userData.followingList?.length ?? 0
         
         // 保留 isAdmin 字段（可能 profile 接口不返回这个字段）
         userData.isAdmin = userData.isAdmin ?? us.isAdmin
-        console.log('最终 isAdmin:', userData.isAdmin)
         
         setUser(userData)
         return userData  // 返回用户数据
