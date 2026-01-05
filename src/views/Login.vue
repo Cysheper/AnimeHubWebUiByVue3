@@ -52,7 +52,9 @@
             登录
           </GlassButton>
         </form>
-
+        <from v-else-if="true"> 
+          注册功能已关闭！
+        </from>
         <form v-else @submit.prevent="handleRegister" class="form">
           <GlassInput
             v-model="registerForm.username"
